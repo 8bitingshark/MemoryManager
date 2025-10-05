@@ -1,0 +1,72 @@
+# =============================
+# Attributes Presets
+# =============================
+
+[attr]lfs      filter=lfs diff=lfs merge=binary -text
+[attr]lfstext  filter=lfs diff=lfstext merge=lfstext -text
+
+# =============================
+# Source Code (normalize line endings)
+# =============================
+*.cpp text eol=lf
+*.c   text eol=lf
+*.h   text eol=lf
+*.hpp text eol=lf
+*.inl text eol=lf
+*.txt text eol=lf
+*.md  text eol=lf
+CMakeLists.txt text eol=lf
+
+# =============================
+# Project Files (CRLF for Windows/Visual Studio)
+# =============================
+*.sln     text eol=crlf
+*.vcxproj text eol=crlf
+*.filters text eol=crlf
+*.props   text eol=crlf
+
+# =============================
+# 3D Models & Assets (LFS tracked)
+# =============================
+*.obj lfs
+*.mtl lfs
+*.fbx lfs
+*.dae lfs
+*.blend lfs
+*.3ds lfs
+
+# =============================
+# Textures / Images (LFS tracked)
+# =============================
+*.png  lfs
+*.jpg  lfs
+*.jpeg lfs
+*.tga  lfs
+*.bmp  lfs
+*.gif  lfs
+*.hdr  lfs
+*.dds  lfs
+
+# =============================
+# Fonts (LFS tracked)
+# =============================
+*.ttf lfs
+*.otf lfs
+
+# =============================
+# Shaders (text, normalize line endings)
+# =============================
+*.glsl text eol=lf
+*.hlsl text eol=lf
+*.fx   text eol=lf
+
+# =============================
+# Binaries (LFS tracked)
+# =============================
+*.dll   lfs
+*.so    lfs
+*.dylib lfs
+*.exe   lfs
+*.lib   lfs
+*.a     lfs
+*.pdb   lfs
