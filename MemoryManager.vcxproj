@@ -152,6 +152,7 @@
     <ClInclude Include="include\mema\CtmSOABackend.h" />
     <ClInclude Include="include\mema\STL_Allocator.h" />
     <ClInclude Include="include\mema\SystemBackend.h" />
+    <ClInclude Include="include\mstl\mvector.h" />
     <ClInclude Include="include\SmallObjAllocator\Chunk.h" />
     <ClInclude Include="include\SmallObjAllocator\FixedAllocator.h" />
     <ClInclude Include="include\SmallObjAllocator\SmallObjAllocator.h" />
