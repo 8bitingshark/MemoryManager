@@ -90,16 +90,6 @@ soa::CtmFixedAllocator& soa::CtmFixedAllocator::operator=(CtmFixedAllocator&& ot
 
 void* soa::CtmFixedAllocator::Allocate()
 {
-	SOA_LOG_OSS("===BEGIN CtmFixedAllocator(" << this->m_blockSize << ")::Allocate===");
-	SOA_LOG("Situation Before New Allocation: \n");
-
-	SOA_PrintChunks(m_chunks);
-	SOA_LOG("\n");
-	SOA_PrintChunkMap(m_chunkMap);
-	SOA_LOG("\n");
-	SOA_LOG_OSS("numOfFullChunks: " << m_numFullChunks);
-
-
 	// current allocChunk has no available blocks
 	if (!m_allocChunk || m_allocChunk->m_blocksAvailable == 0)
 	{
@@ -109,23 +99,13 @@ void* soa::CtmFixedAllocator::Allocate()
 			++m_numFullChunks;
 		}
 		
-		SOA_LOG_OSS("numOfFullChunks++: " << m_numFullChunks << " | num of Chunks: " << m_chunks.size());
 		assert(m_numFullChunks <= m_chunks.size());
-
-		SOA_LOG_OSS("numOfFullChunks++: " << m_numFullChunks);
 
 		// first checks if there is an empty free block for faster allocation
 		// I think could improve "a little" in some scenarios, if you deallocate
-		// like an entire chunk plus some of the others.
-		//
-		// Another strategy could be that you keep another vector of "quite empty chunks"
-		// (for example chunks that has 2/3 of blocks available or also half of the blocks)
-		// You pick always the first. When it is full you will move out from that vector
-		//
-		// I'm not sure that this second strategy is good for locality. If you do "sparse"
-		// deallocations and then you have a bulk allocation and you try to fill all the 
-		// empty little pieces, than if you deallocate all of them, you need to move
-		// from a chunk to another
+		// completely some chunks at a some point. But obviously it depends from
+		// real case scenarios. For now, I just like to think and take different
+		// approaches for exercise.
 
 		if (!m_freeChunks.empty())
 		{
@@ -137,15 +117,8 @@ void* soa::CtmFixedAllocator::Allocate()
 			m_chunkMap[key] = m_allocChunk;
 		}
 
-		// find a suitable one 
-		// if all of them are full, create a new chunk
-		// 
-		// An additional thing could be to store a variable that keeps track
-		// about the number of fully occupied chunks, so here before searching with
-		// the iterator you can test if the number of current chunks == to number of fully occupied
-		//
-		// This way could avoid an O(N) cost of going through all the chunks just to discover that 
-		// all are occupied.
+		// no empty chunks? Check if all of them are full, if that so
+		// immediately create a new chunk.
 
 		else if(m_chunks.size() == m_numFullChunks)
 		{
@@ -159,22 +132,10 @@ void* soa::CtmFixedAllocator::Allocate()
 			std::uintptr_t key = reinterpret_cast<uintptr_t>(newChunkPtr->m_pData);
 			m_chunkMap[key] = newChunkPtr;
 
-			// debug
-			{
-				SOA_LOG("CtmFixedAllocator - allocates a new chunk");
-				SOA_LOG_OSS("m_pData points to address: " << reinterpret_cast<void*>(newChunkPtr->m_pData));
-				SOA_LOG_OSS("new Chunk address: " << newChunkPtr);
-				SOA_LOG("CtmFixedAllocator - newChunkPtr registered to the map");
-				SOA_LOG("New map situation: ");
-				SOA_LOG("\n");
-				SOA_PrintChunkMap(m_chunkMap);
-				SOA_LOG("\n");
-			}
-
-
 			m_allocChunk = newChunkPtr;
 			m_deallocChunk = &m_chunks.front(); // m_deallocChunk = m_allocChunk; 
 		}
+
 		// some chunks are not full, so find the right one
 		else 
 		{
@@ -190,9 +151,6 @@ void* soa::CtmFixedAllocator::Allocate()
 	assert(m_allocChunk);
 	assert(m_allocChunk->m_blocksAvailable > 0);
 
-	SOA_LOG("CtmFixedAllocator - forward allocation request to Chunk");
-
-	SOA_LOG_OSS("===FINISH CtmFixedAllocator(" << this->m_blockSize << ")::Allocate===");
 	return m_allocChunk->Allocate(m_blockSize);
 }
 
@@ -204,8 +162,6 @@ void* soa::CtmFixedAllocator::Allocate()
 
 void soa::CtmFixedAllocator::Deallocate(void* p)
 {
-	SOA_LOG_OSS("===BEGIN CtmFixedAllocator(" << this->m_blockSize << ")::Deallocate===");
-
 	assert(!m_chunks.empty());
 	assert(&m_chunks.front() <= m_deallocChunk);
 	assert(&m_chunks.back() >= m_deallocChunk);
@@ -228,55 +184,29 @@ void soa::CtmFixedAllocator::Deallocate(void* p)
 
 	m_deallocChunk = chunk;
 
-	// debug
-	SOA_LOG_OSS("p address:" << p);
-	SOA_LOG_OSS("Chunk*: " << it->second);
-	SOA_LOG("Current chunks before deallocation: ");
-	SOA_PrintChunks(m_chunks);
-
 	bool b_IsChunkFullBeforeDeallocation = m_deallocChunk->m_blocksAvailable == 0 ? true : false;
-	SOA_LOG_OSS("Is ChunkFullBeforeDealloc: " << b_IsChunkFullBeforeDeallocation);
 
 	DoDeallocate(p);
 
+	// if the chunk was full decrease m_numFullChunks
 	if (b_IsChunkFullBeforeDeallocation)
 	{
 		--m_numFullChunks;
-		SOA_LOG_OSS("FFFFFESFAEWFnumOfFullChunks--: " << m_numFullChunks);
 	}
-
-	// debug
-	SOA_LOG("Current chunks after deallocation: ");
-	SOA_PrintChunks(m_chunks);
-	SOA_LOG_OSS("===FINISH CtmFixedAllocator(" << this->m_blockSize << ")::Deallocate===");
 }
 
 /// -----------------------------------------------------------------------------
 /// CtmFixedAllocator::DoDeallocate
-/// Performs deallocation. Assumes deallocChunk_ points to the correct chunk
 /// -----------------------------------------------------------------------------
-/// <summary>
-/// Deallocates a memory block previously allocated by the CtmFixedAllocator 
-/// and manages chunk release based on usage heuristics.
+/// Performs deallocation. Assumes deallocChunk_ points to the correct chunk
 /// 
-/// Rilasciare dopo 2 Chunk vuoti
-/// Scopo: ridurre footprint e mantenere la cache locality 
-/// senza accumulare troppi chunk vuoti.
-/// 
-/// Aumentare il numero di Chunk potrebbe migliorare per Bulk allocation grosse
-/// dopo deallocazioni.
-/// 
-/// </summary>
-/// <param name="p">Pointer to the memory block to deallocate.</param>
+/// For now just checks if the chunk is empty, remove for map and add it to
+/// the vector of empty chunks
 
 void soa::CtmFixedAllocator::DoDeallocate(void* p)
 {
-	SOA_LOG_OSS("===BEGIN CtmFixedAllocator(" << this->m_blockSize << ")::DoDeallocate===");
-
 	assert(m_deallocChunk->m_pData <= p);
 	assert(m_deallocChunk->m_pData + m_numBlocks * m_blockSize > p);
-
-	SOA_LOG_OSS("CtmFixedAllocator (" << this->m_blockSize << ") - forward deallocation to chunk");
 
 	m_deallocChunk->Deallocate(p, m_blockSize);
 
@@ -290,6 +220,4 @@ void soa::CtmFixedAllocator::DoDeallocate(void* p)
 		m_freeChunks.push_back(m_deallocChunk);
 		m_deallocChunk = &m_chunks.front();
 	}
-
-	SOA_LOG_OSS("===FINISH CtmFixedAllocator(" << this->m_blockSize << ")::DoDeallocate===");
 }

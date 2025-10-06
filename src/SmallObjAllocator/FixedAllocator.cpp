@@ -124,8 +124,6 @@ void* soa::FixedAllocator::Allocate()
 				newChunk.Init(m_blockSize, m_numBlocks);
 				m_chunks.push_back(newChunk); // copy
 
-				SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - allocates a new chunk");
-
 				m_allocChunk = &m_chunks.back();
 				m_deallocChunk = m_allocChunk;   // &m_chunks.front();
 				break;
@@ -134,7 +132,6 @@ void* soa::FixedAllocator::Allocate()
 			// found an usable chunk
 			if (it->m_blocksAvailable > 0)
 			{
-				SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - found an usable chunk");
 				m_allocChunk = &*it;
 				break;
 			}
@@ -144,7 +141,6 @@ void* soa::FixedAllocator::Allocate()
 	assert(m_allocChunk);
 	assert(m_allocChunk->m_blocksAvailable > 0);
 
-	SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - allocate into the m_allocChunk");
 	return m_allocChunk->Allocate(m_blockSize);
 }
 
@@ -224,7 +220,6 @@ void soa::FixedAllocator::DoDeallocate(void* p)
 	assert(m_deallocChunk->m_pData <= p);
 	assert(m_deallocChunk->m_pData + m_numBlocks * m_blockSize > p);
 
-	SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - forward deallocation to chunk");
 	m_deallocChunk->Deallocate(p, m_blockSize);
 
 	// check if we need release it
@@ -238,7 +233,6 @@ void soa::FixedAllocator::DoDeallocate(void* p)
 				m_deallocChunk[-1].m_blocksAvailable == m_numBlocks)
 			{
 				// two chunks empty
-				SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - release an empty chunk (two empty found)");
 				lastChunk.Release();
 				m_chunks.pop_back();
 				m_allocChunk = m_deallocChunk = &m_chunks.front();
@@ -249,7 +243,6 @@ void soa::FixedAllocator::DoDeallocate(void* p)
 		if (lastChunk.m_blocksAvailable == m_numBlocks)
 		{
 			// two empty
-			SOA_LOG_OSS("FixedAllocator (" << this->m_blockSize << ") - release an empty chunk (two empty found)");
 			lastChunk.Release();
 			m_chunks.pop_back();
 			m_allocChunk = m_deallocChunk;
@@ -258,7 +251,7 @@ void soa::FixedAllocator::DoDeallocate(void* p)
 		{
 			// we want empties to the end
 			std::swap(*m_deallocChunk, lastChunk);
-			m_allocChunk = &m_chunks.back(); // vuoto, quindi sicuramente adatto per allocazioni
+			m_allocChunk = &m_chunks.back(); // empty, so ready for new allocations
 		}
 	}
 }

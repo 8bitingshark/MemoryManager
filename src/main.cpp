@@ -1,7 +1,6 @@
 #include "bmk\Benchmark.h"
 #include "mema\Alloc_typedef.h"
 #include "mema\CtmSOABackend.h"
-
 #include <iostream>
 
 int main()
@@ -33,22 +32,6 @@ int main()
 	//bench.BenchSameOrder(ctmAlloc, size);
 	//bench.BenchReverseOrder(ctmAlloc, size);
 	bench.BenchButterfly(ctmAlloc, size);
-
-
-
-	//std::cout << "\n\n=====Testing Using Vectors=====\n";
-	//// std::vector con SystemAllocator
-	//std::vector<int, mema::SystemAllocatorSTL<int>> vec_sys;
-	//vec_sys.push_back(10);
-	//vec_sys.push_back(20);
-
-	//// std::vector con SOA allocator
-	//std::vector<int, mema::SoaAllocatorSTL<int>> vec_soa;
-
-	//for (int i = 0; i < 260; ++i)
-	//{
-	//	vec_soa.push_back(i);
-	//}
 
 	return 0;
 }

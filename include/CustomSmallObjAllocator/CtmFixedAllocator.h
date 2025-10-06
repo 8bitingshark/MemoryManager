@@ -8,29 +8,35 @@
 
 namespace soa {
 
-	/// CtmFixedAllocator is a slightly modification of 
-	/// the FixedAllocator by Alexandrescu with the aim of improving deallocation
-	/// for Butterfly trends scenarios.
+	/// CtmFixedAllocator is a slightly modified version of 
+	/// Alexandrescu’s FixedAllocator, designed to improve the speed 
+	/// of allocation and deallocation, especially in butterfly 
+	/// (sub)trend scenarios.
 	/// 
 	/// It uses std::deque to keep tracks of allocated chunks.
 	/// - Insertion and deletion at either end of a deque never 
 	///   invalidates pointers or references to the rest of the elements.
 	/// - As opposed to std::vector, the elements of a deque are 
-	///   not stored contiguously. Loss in locality.
+	///   not stored contiguously.
 	/// - Expansion of a deque is cheaper than the expansion of 
 	///   a std::vector because it does not involve copying of the 
 	///   existing elements to a new memory location. On the other hand,
 	///   deques typically have large minimal memory cost.
 	/// (For more see:https://en.cppreference.com/w/cpp/container/deque.html).
 	/// 
-	/// The reason for std::deque is to use std::map to find faster the
-	/// right chunk when Deallocate is called and avoid invalidation of 
-	/// pointers.
+	/// Using std::deque in this context allows the allocator to safely use 
+	/// an std::map for faster lookup of the appropriate chunk during deallocation,
+	/// while avoiding pointer invalidation.
 	/// 
-	/// There is also a vector to "cache" some empty chunks and try to speed
-	/// up newer allocations after a chunks is completely freed.
+	/// A separate std::vector is also maintained to cache empty chunks,
+	/// and trying to speed up newer allocations.
 	/// 
-	/// Additionaly there is m_numFullBlocks in order to avoid 
+	/// Additionally, the m_numFullBlocks member tracks how many chunks 
+	/// are completely full, allowing the allocator to skip unnecessary searches 
+	/// for available chunks, unlike the original Alexandrescu implementation.
+	/// 
+	/// This approach trades some space for potential gains 
+	/// in allocation and deallocation speed.
 
 	class CtmFixedAllocator {
 

@@ -142,6 +142,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\SmallObjAllocator\SmallObjAllocator.cpp" />
     <ClCompile Include="src\SmallObjAllocator\SmallObject.cpp" />
+    <ClCompile Include="src\test\Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\bmk\BmkAllocator.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="include\SmallObjAllocator\SOA_overrides.h" />
     <ClInclude Include="include\mema\SoaBacked.h" />
     <ClInclude Include="include\bmk\Benchmark.h" />
+    <ClInclude Include="include\test\Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
