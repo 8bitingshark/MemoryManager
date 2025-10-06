@@ -6,4 +6,6 @@
 - For deallocation I use std::deque to preserve stable pointers, which allows me to maintain a map (chunk pData - pointer to owning chunk. This enables quick location of the correct chunk during deallocation.
 - This project allowed me to explore memory management and allocation strategies in C++, sharpening my understanding through experimentation.
 ## Results
-![ResultsImage](ButterflyTrendTest)
+<p align="center">
+  <img src="ButterflyTrendTest.png" alt="ResultsImage" width="600">
+</p>
